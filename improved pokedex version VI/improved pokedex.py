@@ -253,6 +253,9 @@ def MainMenu():
     #creates a combo box menu that gives users option to enter user management or search for pokemon
     mycombBox = CTkComboBox(inner_frame,values=options,height=40, width=200, corner_radius=32,fg_color='#FFFFFF',text_color='#A0182C', border_width=2, border_color= '#D4A55E',button_color= '#D4A55E', button_hover_color='#B04040',dropdown_hover_color='#A0182C', dropdown_fg_color='#F5F5F5',dropdown_text_color='#D4A55E',command=MenuOption)
     
+    #changes the combo box to a read only so users can no longer change the text link before
+    mycombBox._entry.configure(state="readonly")
+
     mycombBox.pack(pady=25, padx=22)
 
 
@@ -261,14 +264,17 @@ def UserManagement(ManageChoice):
     if ManageChoice == '1':
         print('Change Username')
         UserChange()
-    if ManageChoice == '2':
+    elif ManageChoice == '2':
         print('Change Password')
         PassChange()
-    if ManageChoice == '3':
+    elif ManageChoice == '3':
         print('Delete Account')
         DeleteUser(User_data, username)
-    if ManageChoice == '4':
+    elif ManageChoice == '4':
         MainMenu()
+    else:
+        #displays error message to user in an intuative way
+        CTkMessagebox(master=window, title="Invalid option", message="You entered an INVALID option, please try again", icon="cancel",option_1="Ok",fg_color='#E0E0E0',bg_color='#2E2E2E',text_color='#A0182C', button_color='#A0182C', button_text_color='#2E2E2E')
 
 ######### U S E R    M A N A G E M E N T   M E N U   ######
 def UserManMenu():
@@ -471,6 +477,8 @@ def pokeMenu():
     pokeoptions = ["Search via Name", "Search via ID", "Search via Type", "Quit"]
     #creates a combo box menu that gives users option to enter user management or search for pokemon
     mycombBox = CTkComboBox(inner_frame,values=pokeoptions,height=40, width=200, corner_radius=32,fg_color='#FFFFFF',text_color='#A0182C', border_width=2, border_color= '#D4A55E',button_color= '#D4A55E', button_hover_color='#B04040',dropdown_hover_color='#A0182C', dropdown_fg_color='#F5F5F5',dropdown_text_color='#D4A55E',command=PokeSearchOpt)
+     #changes pokedex to read only state to stop, users changing like before
+    mycombBox._entry.configure(state="readonly")
     mycombBox.pack(pady=25, padx=22)
 
 ########### P O K E M O N    S E A R C H I N G    M E N U    F U N C T I O N ####
@@ -523,34 +531,41 @@ def SearchPoke():
     def load_pokemon(poke_img, username): 
         global pokemon_name
 
-        #gets pokemon from API and stores it so all info is accessable   
-        pokemon = pypokedex.get(name=user_entry.get(1.0, "end-1c"))
-        
-        pokemon_name = pokemon.name
-        ptype = pokemon.types
-        print(pokemon_name, ptype)
-                    
-        #gets the image from the pypokedex api 
-        http = urllib3.PoolManager()
-        response = http.request('GET', pokemon.sprites.front.get('default'))
-        #turns image into bytes then pillow image
-        image = PIL.Image.open(BytesIO(response.data))
+        try:
+            #gets pokemon from API and stores it so all info is accessable   
+            pokemon = pypokedex.get(name=user_entry.get(1.0, "end-1c"))
+            
+            pokemon_name = pokemon.name
+            ptype = pokemon.types
+            print(pokemon_name, ptype)
+                        
+            #gets the image from the pypokedex api 
+            http = urllib3.PoolManager()
+            response = http.request('GET', pokemon.sprites.front.get('default'))
+            #turns image into bytes then pillow image
+            image = PIL.Image.open(BytesIO(response.data))
 
-        img = CTkImage(image, size=(140,140))
-        poke_img.configure(image=img)
-        poke_img.image = img
+            img = CTkImage(image, size=(140,140))
+            poke_img.configure(image=img)
+            poke_img.image = img
 
-        #shows all info about pokemon
-        poke_name_disp.configure(text=f"#{pokemon.dex} - {pokemon.name.capitalize()}")
-        poke_type1.configure(bg_color="#F5F5F5",text=f"Type: {', '.join(pokemon.types)}\n"
-                             f"Height: {pokemon.height/10}m\n"
-                             f"Weight: {pokemon.weight/10}kg\n")
-                             
-        poke_type2.configure(bg_color='#F5F5F5' ,text=f"Base Stats:\n"
-                             f"HP: {pokemon.base_stats.hp}\n"
-                             f"Attack: {pokemon.base_stats.attack}\n"
-                             f"Defense: {pokemon.base_stats.defense}\n"
-                             f"Speed: {pokemon.base_stats.speed}")
+            #shows all info about pokemon
+            poke_name_disp.configure(text=f"#{pokemon.dex} - {pokemon.name.capitalize()}")
+            poke_type1.configure(bg_color="#F5F5F5",text=f"Type: {', '.join(pokemon.types)}\n"
+                                f"Height: {pokemon.height/10}m\n"
+                                f"Weight: {pokemon.weight/10}kg\n")
+                                
+            poke_type2.configure(bg_color='#F5F5F5' ,text=f"Base Stats:\n"
+                                f"HP: {pokemon.base_stats.hp}\n"
+                                f"Attack: {pokemon.base_stats.attack}\n"
+                                f"Defense: {pokemon.base_stats.defense}\n"
+                                f"Speed: {pokemon.base_stats.speed}")
+
+        except Exception as e:
+            #displays error message to user if pokemon not found
+            CTkMessagebox(master=window, title="Invalid option", message="The Pokemon entered could not be found, please try again", icon="cancel",option_1="Ok",fg_color='#E0E0E0',bg_color='#2E2E2E',text_color='#A0182C', button_color='#A0182C', button_text_color='#2E2E2E')
+            print(f"Error loading Pokémon: {e}")
+
 
     info_frame = CTkFrame(outer_frame,fg_color='#6E9BAF', border_color='#F5F5F5', border_width=3)
     info_frame.pack(pady=5,padx=20)
@@ -833,7 +848,7 @@ def SearchType():
 
     outer_frame = create_center_frame(fg_color="#A0182C", bg_color='#E0E0E0',border_color='#F5F5F5', corner_radius=40)
 
-    # Input field for type
+    #Input field for type
     type_label = CTkLabel(outer_frame, text="Enter Pokémon type (e.g., fire, water):", font=('Arial', 18), bg_color='transparent', fg_color='transparent', text_color='#EBEBEB')
     type_label.pack(pady=10)
 
@@ -845,6 +860,15 @@ def SearchType():
     type_entry.pack(pady=5)
 
     def ShowPokeType():
+        #Loops through all widgets inside search types's inner_frame
+        for widget in inner_frame.winfo_children():
+            
+            #Checks if the widget is a frame or a label, to get rid of the previous pokemon image and name
+            if isinstance(widget, CTkFrame) or isinstance(widget, CTkLabel):
+                
+                #Removes the widget from the window to stop new pokemon type searched from overlapping the old one
+                widget.destroy()
+
         #gets pokemon type entered
         pokemon_type = type_entry.get().strip().lower()
 
@@ -929,7 +953,8 @@ def SearchType():
                 except Exception as e:
                     print(f"Error loading Pokémon {poke_name}: {e}")
         else:
-            tk.messagebox.showerror("Error", f"Failed to fetch data for type: {pokemon_type}")
+            CTkMessagebox(master=window, title="Error", message="Failed to find pokemon type, please try again", icon="cancel",option_1="Ok",fg_color='#E0E0E0',bg_color='#2E2E2E',text_color='#A0182C', button_color='#A0182C', button_text_color='#2E2E2E')
+   
 
     #creates a button frame
     button_frame = tk.Frame(inner_frame, bg='#BDD2DB')
